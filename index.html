@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>StoryForge — Write with Consequence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=DM+Mono:ital,wght@0,300;0,400;1,300&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    html,body,#root{height:100%;margin:0;padding:0;background:#080706;}
+    #loading{position:fixed;inset:0;background:#080706;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:1.2rem;transition:opacity 0.5s;}
+    #loading.hidden{opacity:0;pointer-events:none;}
+    .load-logo{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;color:#f2ead8;}
+    .load-logo span{color:#c94b1a;}
+    .load-bar{width:120px;height:1px;background:rgba(201,75,26,0.15);overflow:hidden;}
+    .load-fill{height:100%;background:#c94b1a;animation:lb 1.2s ease forwards;}
+    @keyframes lb{from{width:0}to{width:100%}}
+    .load-label{font-family:'DM Mono',monospace;font-size:0.52rem;letter-spacing:0.22em;text-transform:uppercase;color:#7a6f62;}
+      @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=DM+Mono:ital,wght@0,300;0,400;1,300&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+  :root {
+    --void:#080706;--coal:#111009;--char:#1a1814;--slate:#2c2820;--ash:#3d3830;
+    --fog:#7a6f62;--mist:#a89e92;--parchment:#e8ddc8;--cream:#f2ead8;
+    --ember:#c94b1a;--flame:#e8622a;--gold:#c9943a;--sepia:#b8956a;--green:#4caf7d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--void);overflow-x:hidden;}
+  ::-webkit-scrollbar{width:3px;}
+  ::-webkit-scrollbar-track{background:var(--void);}
+  ::-webkit-scrollbar-thumb{background:var(--ember);}
+
+  /* ── SHARED ── */
+  .mono{font-family:'DM Mono',monospace;}
+  .display{font-family:'Cormorant Garamond',serif;}
+  .serif{font-family:'Libre Baskerville',serif;}
+
+  /* ── BUTTONS ── */
+  .btn{font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.75rem 1.8rem;cursor:pointer;transition:all 0.2s;border:none;display:inline-flex;align-items:center;gap:0.5rem;}
+  .btn-fire{background:var(--ember);color:white;}
+  .btn-fire:hover:not(:disabled){background:var(--flame);transform:translateY(-1px);}
+  .btn-fire:disabled{opacity:0.4;cursor:not-allowed;}
+  .btn-ghost{background:transparent;color:var(--mist);border:1px solid rgba(122,111,98,0.3);}
+  .btn-ghost:hover{color:var(--parchment);border-color:var(--mist);}
+  .btn-sm{padding:0.45rem 1rem;font-size:0.55rem;}
+  .btn-full{width:100%;justify-content:center;}
+
+  /* ── SPINNER / ANIM ── */
+  .spin{width:11px;height:11px;border:1.5px solid rgba(255,255,255,0.2);border-top-color:white;border-radius:50%;animation:spinning 0.7s linear infinite;flex-shrink:0;}
+  @keyframes spinning{to{transform:rotate(360deg);}}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ════════════════════════════════════════
+     LANDING PAGE
+  ════════════════════════════════════════ */
+  .landing{background:var(--void);color:var(--parchment);font-family:'Libre Baskerville',serif;min-height:100vh;}
+
+  /* Nav */
+  .lnav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.1rem 3rem;background:linear-gradient(to bottom,rgba(8,7,6,0.97) 70%,transparent);border-bottom:1px solid rgba(201,75,26,0.08);}
+  .lnav-logo{font-family:'Cormorant Garamond',serif;font-size:1.45rem;font-weight:700;color:var(--cream);}
+  .lnav-logo span{color:var(--ember);}
+  .lnav-links{display:flex;gap:2.5rem;list-style:none;}
+  .lnav-links a{font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fog);text-decoration:none;cursor:pointer;transition:color 0.2s;}
+  .lnav-links a:hover{color:var(--parchment);}
+  .lnav-right{display:flex;align-items:center;gap:0.8rem;}
+  .lnav-signin{font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--mist);background:none;border:none;cursor:pointer;padding:0.5rem 1rem;transition:color 0.2s;}
+  .lnav-signin:hover{color:var(--parchment);}
+  .lnav-cta{background:var(--ember);color:white;border:none;font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.55rem 1.3rem;cursor:pointer;transition:all 0.2s;}
+  .lnav-cta:hover{background:var(--flame);}
+
+  /* Hero */
+  .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8rem 2rem 5rem;text-align:center;position:relative;background:radial-gradient(ellipse at 50% 38%,rgba(201,75,26,0.09) 0%,transparent 65%);}
+  .hero::before{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 79px,rgba(201,75,26,0.03) 80px);pointer-events:none;}
+  .hero-eyebrow{font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--ember);margin-bottom:2rem;display:flex;align-items:center;gap:1rem;animation:fadeUp 0.8s 0.1s both;}
+  .hero-eyebrow::before,.hero-eyebrow::after{content:'';width:36px;height:1px;background:var(--ember);opacity:0.5;}
+  .hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(4rem,9vw,8.5rem);font-weight:300;line-height:0.92;color:var(--cream);animation:fadeUp 0.9s 0.25s both;}
+  .hero-title strong{font-weight:700;display:block;}
+  .hero-title em{font-style:italic;color:var(--sepia);display:block;}
+  .hero-sub{font-size:1rem;color:var(--mist);max-width:500px;margin:2.2rem auto 0;line-height:1.9;animation:fadeUp 0.8s 0.45s both;}
+  .hero-btns{display:flex;gap:1rem;margin-top:3rem;justify-content:center;animation:fadeUp 0.8s 0.6s both;}
+  .hero-stats{display:flex;gap:4rem;margin-top:5rem;animation:fadeUp 0.8s 0.75s both;}
+  .stat-num{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:700;color:var(--cream);line-height:1;}
+  .stat-lbl{font-family:'DM Mono',monospace;font-size:0.55rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--fog);margin-top:0.3rem;}
+  .stat-div{width:1px;background:rgba(122,111,98,0.18);}
+  .scroll-cue{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:0.4rem;font-family:'DM Mono',monospace;font-size:0.52rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fog);opacity:0;animation:fadeIn 1s 1.5s forwards;}
+  .scroll-line{width:1px;height:38px;background:linear-gradient(to bottom,var(--ember),transparent);animation:blink 2s ease-in-out infinite;}
+
+  /* Philosophy strip */
+  .philosophy{background:var(--char);border-top:1px solid rgba(201,75,26,0.12);border-bottom:1px solid rgba(201,75,26,0.12);padding:5rem 3rem;}
+  .philosophy-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 2fr;gap:5rem;align-items:start;}
+  .section-label{font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.26em;text-transform:uppercase;color:var(--ember);writing-mode:vertical-lr;transform:rotate(180deg);white-space:nowrap;}
+  .phil-title{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:300;line-height:1.1;color:var(--cream);margin-bottom:1.5rem;}
+  .phil-title em{font-style:italic;color:var(--sepia);}
+  .phil-desc{color:var(--mist);font-size:0.95rem;line-height:1.9;margin-bottom:2.5rem;max-width:560px;}
+  .pillar-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;}
+  .pillar{padding:1.5rem;border:1px solid rgba(201,75,26,0.12);transition:all 0.3s;}
+  .pillar:hover{border-color:rgba(201,75,26,0.35);transform:translateY(-3px);}
+  .pillar-icon{font-size:1.3rem;margin-bottom:0.8rem;}
+  .pillar h3{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:700;color:var(--cream);margin-bottom:0.5rem;}
+  .pillar p{font-size:0.85rem;color:var(--fog);line-height:1.7;}
+
+  /* Personalities showcase */
+  .p-showcase{padding:6rem 3rem;background:var(--void);}
+  .p-showcase-inner{max-width:1100px;margin:0 auto;}
+  .section-eye{font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.26em;text-transform:uppercase;color:var(--ember);margin-bottom:0.6rem;}
+  .section-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,4vw,3.5rem);font-weight:300;color:var(--cream);line-height:1.1;margin-bottom:0.8rem;}
+  .section-title em{font-style:italic;color:var(--sepia);}
+  .section-sub{color:var(--mist);font-size:0.9rem;max-width:480px;line-height:1.85;margin-bottom:3rem;}
+  .p-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(201,75,26,0.1);}
+  .p-card{background:var(--void);padding:2rem;cursor:pointer;transition:background 0.25s;position:relative;overflow:hidden;}
+  .p-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--ember);transform:scaleX(0);transition:transform 0.3s;}
+  .p-card:hover{background:var(--char);}
+  .p-card:hover::after{transform:scaleX(1);}
+  .p-card-genre{font-family:'DM Mono',monospace;font-size:0.56rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--ember);margin-bottom:0.8rem;display:flex;align-items:center;gap:0.5rem;}
+  .p-card-genre::before{content:'';display:inline-block;width:16px;height:1px;background:var(--ember);}
+  .p-card-name{font-family:'Cormorant Garamond',serif;font-size:1.45rem;font-style:italic;color:var(--parchment);margin-bottom:0.7rem;line-height:1.2;}
+  .p-card-desc{font-size:0.83rem;color:var(--fog);line-height:1.7;margin-bottom:1.2rem;}
+  .p-card-quote{font-style:italic;color:var(--sepia);font-size:0.88rem;border-left:2px solid var(--ember);padding-left:0.9rem;line-height:1.6;}
+
+  /* Feature list */
+  .features{padding:6rem 3rem;background:var(--coal);border-top:1px solid rgba(201,75,26,0.1);}
+  .features-inner{max-width:1100px;margin:0 auto;}
+  .features-head{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:end;margin-bottom:4rem;}
+  .feature-rows{border-top:1px solid rgba(201,75,26,0.1);}
+  .feature-row{display:grid;grid-template-columns:60px 1fr 1fr;gap:2.5rem;padding:2.5rem 0;border-bottom:1px solid rgba(201,75,26,0.08);align-items:start;transition:padding-left 0.3s;}
+  .feature-row:hover{padding-left:0.6rem;}
+  .feature-num{font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:900;color:rgba(201,75,26,0.15);line-height:1;}
+  .feature-tag{font-family:'DM Mono',monospace;font-size:0.52rem;letter-spacing:0.14em;text-transform:uppercase;background:var(--ember);color:white;padding:0.2rem 0.6rem;display:inline-block;margin-bottom:0.7rem;}
+  .feature-name{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:700;color:var(--cream);margin-bottom:0.5rem;}
+  .feature-desc{font-size:0.88rem;color:var(--mist);line-height:1.8;}
+  .feature-detail{font-size:0.83rem;color:var(--fog);line-height:1.9;}
+  .feature-detail li{list-style:none;padding-left:1rem;position:relative;margin-bottom:0.3rem;}
+  .feature-detail li::before{content:'—';position:absolute;left:0;color:var(--ember);}
+
+  /* Pricing */
+  .pricing{padding:6rem 3rem;background:var(--char);}
+  .pricing-inner{max-width:860px;margin:0 auto;}
+  .pricing-cards{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:rgba(201,75,26,0.1);margin-top:3rem;}
+  .price-card{background:var(--char);padding:3rem;position:relative;}
+  .price-card.featured{background:var(--coal);}
+  .price-tier{font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fog);margin-bottom:1.3rem;}
+  .price-amount{font-family:'Cormorant Garamond',serif;font-size:4.5rem;font-weight:700;color:var(--cream);line-height:1;margin-bottom:0.2rem;}
+  .price-amount small{font-size:1.1rem;font-weight:300;color:var(--fog);}
+  .price-divider{height:1px;background:rgba(201,75,26,0.1);margin:1.5rem 0;}
+  .price-features{list-style:none;display:flex;flex-direction:column;gap:0.7rem;margin-bottom:2rem;}
+  .price-features li{display:flex;gap:0.7rem;font-size:0.85rem;color:var(--mist);align-items:flex-start;}
+  .price-features li::before{content:'—';color:var(--ember);flex-shrink:0;}
+  .price-btn{width:100%;padding:0.9rem;border:1px solid rgba(201,75,26,0.3);background:transparent;color:var(--parchment);font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
+  .price-card.featured .price-btn{background:var(--ember);border-color:var(--ember);}
+  .price-btn:hover{background:var(--ember);border-color:var(--ember);color:white;}
+  .featured-badge{position:absolute;top:0;right:1.8rem;background:var(--ember);color:white;font-family:'DM Mono',monospace;font-size:0.52rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.25rem 0.8rem;}
+
+  /* CTA strip */
+  .cta-strip{padding:7rem 3rem;background:var(--void);text-align:center;position:relative;overflow:hidden;}
+  .cta-strip::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(201,75,26,0.1) 0%,transparent 70%);pointer-events:none;}
+  .cta-strip h2{font-family:'Cormorant Garamond',serif;font-size:clamp(3rem,6vw,6rem);font-weight:300;color:var(--cream);line-height:1.0;margin-bottom:1.5rem;}
+  .cta-strip h2 em{font-style:italic;color:var(--sepia);}
+  .cta-strip p{color:var(--mist);font-size:1rem;margin-bottom:2.5rem;}
+
+  /* Footer */
+  .footer{background:var(--coal);padding:3rem;border-top:1px solid rgba(201,75,26,0.08);display:flex;justify-content:space-between;align-items:center;}
+  .footer-logo{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:700;color:var(--cream);}
+  .footer-logo span{color:var(--ember);}
+  .footer-copy{font-family:'DM Mono',monospace;font-size:0.55rem;letter-spacing:0.1em;color:var(--fog);}
+
+  /* ════════════════════════════════════════
+     AUTH MODAL
+  ════════════════════════════════════════ */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease;backdrop-filter:blur(4px);}
+  .modal{background:var(--char);border:1px solid rgba(201,75,26,0.2);width:100%;max-width:440px;margin:1rem;animation:slideDown 0.3s ease;position:relative;}
+  .modal-head{padding:1.8rem 2rem 0;display:flex;align-items:flex-start;justify-content:space-between;}
+  .modal-title{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;color:var(--cream);line-height:1.1;}
+  .modal-title em{font-style:italic;color:var(--sepia);}
+  .modal-close{background:none;border:none;color:var(--fog);cursor:pointer;font-size:1.1rem;padding:0.2rem;line-height:1;transition:color 0.2s;}
+  .modal-close:hover{color:var(--parchment);}
+  .modal-body{padding:1.5rem 2rem 2rem;}
+  .modal-tabs{display:flex;gap:0;margin-bottom:1.8rem;border-bottom:1px solid rgba(201,75,26,0.1);}
+  .modal-tab{font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fog);background:none;border:none;border-bottom:2px solid transparent;padding:0.6rem 1rem 0.6rem 0;cursor:pointer;margin-right:1.5rem;transition:all 0.2s;}
+  .modal-tab.active{color:var(--ember);border-bottom-color:var(--ember);}
+  .auth-field{margin-bottom:1.1rem;}
+  .auth-label{font-family:'DM Mono',monospace;font-size:0.52rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fog);display:block;margin-bottom:0.4rem;}
+  .auth-input{width:100%;background:var(--slate);border:1px solid rgba(122,111,98,0.2);color:var(--parchment);font-family:'Libre Baskerville',serif;font-size:0.92rem;padding:0.75rem 1rem;outline:none;transition:border-color 0.2s;}
+  .auth-input:focus{border-color:rgba(201,75,26,0.45);}
+  .auth-divider{display:flex;align-items:center;gap:1rem;margin:1.2rem 0;}
+  .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:rgba(122,111,98,0.15);}
+  .auth-divider span{font-family:'DM Mono',monospace;font-size:0.5rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--fog);}
+  .auth-error{background:rgba(201,75,26,0.12);border:1px solid rgba(201,75,26,0.3);color:var(--ember);font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.08em;padding:0.6rem 0.9rem;margin-bottom:1rem;}
+  .auth-footer{text-align:center;margin-top:1.2rem;font-family:'DM Mono',monospace;font-size:0.55rem;letter-spacing:0.08em;color:var(--fog);}
+  .auth-footer button{background:none;border:none;color:var(--ember);cursor:pointer;font-family:'DM Mono',monospace;font-size:0.55rem;letter-spacing:0.08em;text-decoration:underline;}
+
+  /* ════════════════════════════════════════
+     DASHBOARD / APP
+  ════════════════════════════════════════ */
+  .app{display:flex;flex-direction:column;height:100vh;background:var(--void);color:var(--parchment);font-family:'Libre Baskerville',Georgia,serif;font-size:15px;overflow:hidden;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:52px;background:rgba(8,7,6,0.98);border-bottom:1px solid rgba(201,75,26,0.15);flex-shrink:0;z-index:200;}
+  .topbar-logo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:var(--cream);}
+  .topbar-logo span{color:var(--ember);}
+  .story-title-input{background:transparent;border:none;outline:none;font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.12em;color:var(--fog);width:160px;padding:0.3rem 0.5rem;border-bottom:1px solid rgba(122,111,98,0.2);transition:border-color 0.2s;}
+  .story-title-input:focus{border-bottom-color:var(--ember);color:var(--parchment);}
+  .topbar-right{display:flex;align-items:center;gap:0.8rem;}
+  .user-pill{display:flex;align-items:center;gap:0.6rem;padding:0.3rem 0.8rem 0.3rem 0.4rem;border:1px solid rgba(122,111,98,0.2);cursor:pointer;transition:border-color 0.2s;}
+  .user-pill:hover{border-color:rgba(201,75,26,0.3);}
+  .user-avatar{width:24px;height:24px;border-radius:50%;background:var(--ember);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:0.6rem;color:white;font-weight:700;}
+  .user-name{font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.1em;color:var(--mist);}
+  .tabbar{display:flex;background:var(--coal);border-bottom:1px solid rgba(201,75,26,0.12);flex-shrink:0;overflow-x:auto;}
+  .tabbar::-webkit-scrollbar{height:2px;}
+  .tab-btn{display:flex;align-items:center;gap:0.5rem;padding:0 1.4rem;height:44px;font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fog);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:all 0.2s;}
+  .tab-btn:hover{color:var(--parchment);}
+  .tab-btn.active{color:var(--ember);border-bottom-color:var(--ember);}
+  .tab-icon{font-size:0.85rem;}
+  .main{flex:1;overflow-y:auto;overflow-x:hidden;}
+
+  /* Panel */
+  .panel{max-width:1100px;margin:0 auto;padding:2.5rem 2rem;}
+  .panel-title{font-family:'Cormorant Garamond',serif;font-size:2.6rem;font-weight:300;color:var(--cream);line-height:1.05;margin-bottom:0.4rem;}
+  .panel-title em{font-style:italic;color:var(--sepia);}
+  .panel-sub{font-size:0.88rem;color:var(--mist);margin-bottom:2rem;max-width:560px;line-height:1.8;}
+  .eyebrow{font-family:'DM Mono',monospace;font-size:0.55rem;letter-spacing:0.26em;text-transform:uppercase;color:var(--ember);margin-bottom:0.5rem;}
+
+  /* Form */
+  .field{margin-bottom:1.2rem;}
+  .field-label{font-family:'DM Mono',monospace;font-size:0.55rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fog);margin-bottom:0.5rem;display:block;}
+  .field-input,.field-select,.field-textarea{width:100%;background:var(--char);border:1px solid rgba(122,111,98,0.15);color:var(--parchment);font-family:'Libre Baskerville',serif;font-size:0.9rem;padding:0.75rem 1rem;outline:none;transition:border-color 0.2s;}
+  .field-input:focus,.field-select:focus,.field-textarea:focus{border-color:rgba(201,75,26,0.4);}
+  .field-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a6f62'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 1rem center;cursor:pointer;}
+  .field-textarea{resize:vertical;min-height:100px;line-height:1.7;}
+  .chip-group{display:flex;flex-wrap:wrap;gap:0.4rem;}
+  .chip{font-family:'DM Mono',monospace;font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.35rem 0.8rem;border:1px solid rgba(122,111,98,0.25);background:transparent;color:var(--fog);cursor:pointer;transition:all 0.2s;}
+  .chip:hover{border-color:rgba(201,75,26,0.4);color:var(--parchment);}
+  .chip.on{background:rgba(201,75,26,0.15);border-color:rgba(201,75,26,0.5);color:var(--parchment);}
+
+  /* Output */
+  .out-card{background:var(--char);border:1px solid rgba(201,75,26,0.12);margin-top:1.5rem;animation:fadeUp 0.4s ease;}
+  .out-tag{font-family:'DM Mono',monospace;font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;padding:0.2rem 0.6rem;}
+  .tag-c{background:rgba(201,75,26,0.2);color:var(--ember);}
+  .tag-r{background:rgba(201,148,58,0.15);color:var(--gold);}
+  .tag-d{background:rgba(42,36,32,0.9);color:var(--mist);border:1px solid rgba(122,111,98,0.2);}
+  .tag-v{background:rgba(201,75,26,0.35);color:#ff8060;}
+  .tag-b{background:rgba(76,175,125,0.15);color:var(--green);}
+  .tag-w{background:rgba(201,148,58,0.2);color:var(--gold);}
+  .out-tabs{display:flex;border-bottom:1px solid rgba(201,75,26,0.1);background:rgba(0,0,0,0.15);}
+  .out-tab{font-family:'DM Mono',monospace;font-size:0.52rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.6rem 1rem;cursor:pointer;color:var(--fog);border-bottom:2px solid transparent;border-right:1px solid rgba(201,75,26,0.06);background:none;border-top:none;border-left:none;transition:all 0.2s;}
+  .out-tab:hover{color:var(--parchment);}
+  .out-tab.active{color:var(--ember);border-bottom-color:var(--ember);}
+  .out-body{font-size:0.88rem;line-height:1.85;color:var(--parchment);}
+  .out-body p{margin-bottom:0.6rem;}
+
+  /* Forge */
+  .forge-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:rgba(201,75,26,0.1);border:1px solid rgba(201,75,26,0.15);}
+  .forge-pane{background:var(--coal);display:flex;flex-direction:column;}
+  .pane-head{display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1.2rem;border-bottom:1px solid rgba(201,75,26,0.08);background:rgba(0,0,0,0.2);}
+  .pane-title{font-family:'DM Mono',monospace;font-size:0.52rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fog);}
+  .pane-dot{width:5px;height:5px;border-radius:50%;background:var(--ember);}
+  .forge-ta{flex:1;background:transparent;border:none;outline:none;color:var(--parchment);font-family:'Libre Baskerville',serif;font-size:0.9rem;line-height:1.9;padding:1.2rem;resize:none;min-height:200px;caret-color:var(--ember);}
+  .forge-ta::placeholder{color:var(--ash);font-style:italic;}
+  .pane-foot{display:flex;align-items:center;justify-content:space-between;padding:0.7rem 1.2rem;border-top:1px solid rgba(201,75,26,0.08);background:rgba(0,0,0,0.15);}
+  .char-ct{font-family:'DM Mono',monospace;font-size:0.52rem;color:var(--fog);}
+  .out-pane{background:var(--char);}
+  .out-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;color:var(--ash);text-align:center;gap:0.6rem;}
+  .out-placeholder-icon{font-size:1.6rem;opacity:0.3;}
+  .out-placeholder p{font-family:'DM Mono',monospace;font-size:0.55rem;letter-spacing:0.12em;text-transform:uppercase;}
+  .p-chips{display:flex;justify-content:center;gap:0.4rem;flex-wrap:wrap;margin-bottom:1.2rem;}
+  .p-chip{font-family:'DM Mono',monospace;font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.4rem 0.9rem;border:1px solid rgba(122,111,98,0.25);background:transparent;color:var(--fog);cursor:pointer;transition:all 0.2s;}
+  .p-chip:hover{border-color:rgba(201,75,26,0.4);color:var(--parchment);}
+  .p-chip.active{background:var(--ember);border-color:var(--ember);color:white;}
+  .rivalry-row{display:flex;justify-content:center;align-items:center;gap:0.8rem;margin-bottom:1.5rem;}
+  .toggle{width:34px;height:18px;background:var(--slate);border-radius:9px;position:relative;cursor:pointer;transition:background 0.3s;border:1px solid rgba(122,111,98,0.2);flex-shrink:0;}
+  .toggle.on{background:var(--ember);border-color:var(--ember);}
+  .toggle-k{position:absolute;top:2px;left:2px;width:12px;height:12px;background:var(--mist);border-radius:50%;transition:left 0.3s,background 0.3s;}
+  .toggle.on .toggle-k{left:18px;background:white;}
+  .rlabel{font-family:'DM Mono',monospace;font-size:0.55rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--fog);}
+  .rbadge{font-family:'DM Mono',monospace;font-size:0.52rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--ember);background:rgba(201,75,26,0.1);border:1px solid rgba(201,75,26,0.25);padding:0.18rem 0.5rem;opacity:0;transition:opacity 0.3s;}
+  .rbadge.on{opacity:1;}
+
+  /* Blueprint */
+  .bp-grid{display:grid;grid-template-columns:320px 1fr;gap:2rem;align-items:start;}
+  .bp-form{background:var(--char);border:1px solid rgba(201,75,26,0.12);padding:1.5rem;}
+  .bp-form-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-style:italic;color:var(--cream);margin-bottom:1.2rem;padding-bottom:0.8rem;border-bottom:1px solid rgba(201,75,26,0.1);}
+  .slider-wrap{margin-bottom:1.2rem;}
+  .slider-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;}
+  .slider-val{font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--ember);}
+  .slider{width:100%;-webkit-appearance:none;height:3px;background:var(--slate);outline:none;border-radius:2px;}
+  .slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--ember);cursor:pointer;}
+  .bp-results{display:flex;flex-direction:column;gap:1.2rem;}
+  .bp-card{background:var(--char);border:1px solid rgba(201,75,26,0.12);animation:fadeUp 0.4s ease;}
+  .bp-card-head{padding:0.8rem 1.2rem;border-bottom:1px solid rgba(201,75,26,0.08);display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.2);}
+  .bp-card-num{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;color:rgba(201,75,26,0.18);line-height:1;}
+  .bp-card-body{padding:1.2rem;font-size:0.88rem;line-height:1.85;color:var(--parchment);}
+  .bp-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:280px;color:var(--ash);text-align:center;gap:0.8rem;border:1px solid rgba(122,111,98,0.08);}
+  .bp-empty-icon{font-size:2.2rem;opacity:0.2;}
+  .bp-empty p{font-family:'DM Mono',monospace;font-size:0.56rem;letter-spacing:0.14em;text-transform:uppercase;}
+
+  /* Rewrite Lab */
+  .rw-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:rgba(201,75,26,0.1);border:1px solid rgba(201,75,26,0.15);}
+  .rw-flag{display:flex;gap:0.8rem;align-items:flex-start;padding:0.7rem 1rem;background:rgba(0,0,0,0.2);border-left:2px solid var(--ember);margin-bottom:0.5rem;}
+  .rw-flag-label{font-family:'DM Mono',monospace;font-size:0.5rem;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.2rem;}
+  .rw-flag-label.warn{color:var(--gold);}
+  .rw-flag-label.fix{color:var(--ember);}
+  .rw-flag-text{font-size:0.82rem;color:var(--mist);line-height:1.5;}
+
+  /* Project */
+  .project-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+  .project-panel{background:var(--char);border:1px solid rgba(201,75,26,0.12);}
+  .project-panel-head{padding:0.8rem 1.2rem;border-bottom:1px solid rgba(201,75,26,0.08);display:flex;align-items:center;gap:0.6rem;background:rgba(0,0,0,0.2);}
+  .proj-dot{width:6px;height:6px;border-radius:50%;}
+  .dot-red{background:var(--ember);animation:blink 2s infinite;}
+  .dot-gold{background:var(--gold);}
+  .dot-green{background:var(--green);}
+  .project-panel-title{font-family:'DM Mono',monospace;font-size:0.55rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fog);}
+  .tracker-list{padding:0.8rem;}
+  .tracker-item{display:flex;gap:0.8rem;align-items:flex-start;padding:0.75rem 0.9rem;border:1px solid rgba(255,255,255,0.03);margin-bottom:0.4rem;transition:border-color 0.2s;}
+  .tracker-item:hover{border-color:rgba(201,75,26,0.2);}
+  .ti-icon{font-size:0.9rem;flex-shrink:0;padding-top:0.1rem;cursor:pointer;}
+  .ti-label{font-family:'DM Mono',monospace;font-size:0.52rem;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.2rem;}
+  .ti-label.alert{color:var(--ember);}
+  .ti-label.warn{color:var(--gold);}
+  .ti-label.ok{color:var(--green);}
+  .ti-desc{font-size:0.82rem;color:var(--mist);line-height:1.5;}
+  .add-thread-row{padding:0.8rem;border-top:1px solid rgba(201,75,26,0.08);display:flex;gap:0.5rem;}
+  .add-thread-input{flex:1;background:var(--slate);border:1px solid rgba(122,111,98,0.15);color:var(--parchment);font-family:'Libre Baskerville',serif;font-size:0.82rem;padding:0.5rem 0.8rem;outline:none;}
+  .add-thread-input:focus{border-color:rgba(201,75,26,0.3);}
+  .hm-rows{padding:1.2rem;display:flex;flex-direction:column;gap:1.2rem;}
+  .hm-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;}
+  .hm-label{font-family:'DM Mono',monospace;font-size:0.55rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--fog);}
+  .hm-val{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--sepia);font-weight:700;}
+  .hm-track{height:7px;background:rgba(255,255,255,0.04);border-radius:4px;overflow:hidden;}
+  .hm-fill{height:100%;border-radius:4px;transition:width 1.2s cubic-bezier(0.16,1,0.3,1);}
+  .hm-hi{background:linear-gradient(to right,var(--sepia),var(--ember));}
+  .hm-md{background:linear-gradient(to right,#6b5f52,var(--sepia));}
+  .hm-lo{background:linear-gradient(to right,#3d3830,#6b5f52);}
+  .hm-alert{display:flex;align-items:center;gap:0.5rem;margin:0.8rem 1.2rem;padding:0.5rem 0.9rem;background:rgba(201,75,26,0.08);border:1px solid rgba(201,75,26,0.25);font-family:'DM Mono',monospace;font-size:0.55rem;letter-spacing:0.1em;color:var(--ember);}
+  .hm-alert-dot{width:5px;height:5px;border-radius:50%;background:var(--ember);animation:blink 1.5s infinite;flex-shrink:0;}
+  .hm-edit-row{padding:0.8rem 1.2rem;border-top:1px solid rgba(201,75,26,0.08);display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;}
+  .hm-slider-label{font-family:'DM Mono',monospace;font-size:0.48rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--fog);margin-bottom:0.3rem;}
+
+  /* ─── RESPONSIVE ── */
+  @media(max-width:1024px){
+    .lnav{padding:1rem 1.5rem;}
+    .lnav-links{gap:1.5rem;}
+    .philosophy-inner{grid-template-columns:1fr;gap:2rem;}
+    .p-grid{grid-template-columns:1fr 1fr;}
+    .features-head{grid-template-columns:1fr;}
+    .feature-row{grid-template-columns:50px 1fr;}
+    .feature-row>*:last-child{display:none;}
+    .pricing-cards{grid-template-columns:1fr;max-width:420px;margin-left:auto;margin-right:auto;}
+    .pillar-grid{grid-template-columns:1fr 1fr;}
+    .bp-grid{grid-template-columns:1fr;}
+    .project-grid{grid-template-columns:1fr;}
+    .forge-grid{grid-template-columns:1fr;}
+    .rw-grid{grid-template-columns:1fr;}
+    .panel{padding:2rem 1.5rem;}
+    .hero-stats{gap:2.5rem;}
+  }
+  @media(max-width:640px){
+    .lnav{padding:0.9rem 1rem;}
+    .lnav-links{display:none;}
+    .hero{padding:6rem 1.2rem 4rem;}
+    .hero-stats{gap:1.5rem;flex-wrap:wrap;justify-content:center;}
+    .stat-div{display:none;}
+    .hero-btns{flex-direction:column;align-items:center;}
+    .hero-btns .btn{width:100%;max-width:280px;justify-content:center;}
+    .p-grid{grid-template-columns:1fr;}
+    .pillar-grid{grid-template-columns:1fr;}
+    .philosophy,.p-showcase,.features,.pricing,.cta-strip{padding:4rem 1.2rem;}
+    .footer{flex-direction:column;gap:1rem;text-align:center;padding:2rem;}
+    .tab-btn{padding:0 0.9rem;font-size:0.52rem;}
+    .tab-icon{display:none;}
+    .panel{padding:1.5rem 1rem;}
+    .panel-title{font-size:2rem;}
+    .hm-edit-row{grid-template-columns:1fr;}
+    .modal{margin:0.5rem;}
+  }
+
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="load-logo">Story<span>Forge</span></div>
+    <div class="load-bar"><div class="load-fill"></div></div>
+    <div class="load-label">Lighting the forge…</div>
+  </div>
+  <div id="root"></div>
+  
+  <script>
+    window.STORYFORGE_WORKER_URL = localStorage.getItem('sf_worker_url') || '';
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <script type="text/babel" data-presets="react">
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const PERSONALITIES = [
+  { key:"dark-romance", emoji:"🖤", label:"Dark Romance", name:"The Seductive Manipulator",
+    desc:"Pushes power imbalance until it becomes unbearable. Questions every easy forgiveness.",
+    quote:"Redemption is cheap if it costs nothing.",
+    prompt:"You are StoryForge's Dark Romance co-writer — The Seductive Manipulator. Push power imbalance, question easy forgiveness, demand emotional risk.\n\nReply with exactly three labeled sections:\n\nCRITIQUE:\n2-3 sentences on what is too easy or emotionally cheap.\n\nREWRITE:\nRewrite the key moment to amplify tension and power imbalance. 80-120 words.\n\nGO DARKER:\nAn alternative that is more forbidden and costly. 80-120 words." },
+  { key:"fantasy", emoji:"🏰", label:"Fantasy", name:"The Lorekeeper",
+    desc:"Obsessively protects magic system logic and world continuity. Tracks every rule.",
+    quote:"If magic drains life force, someone should be paying for it.",
+    prompt:"You are StoryForge's Fantasy co-writer — The Lorekeeper. Protect magic system logic and world continuity.\n\nReply with exactly three labeled sections:\n\nCRITIQUE:\n2-3 sentences on logic gaps or missed world-building.\n\nREWRITE:\nRewrite to deepen mythic weight and internal logic. 80-120 words.\n\nGO DARKER:\nAn alternative with higher magical stakes and costs. 80-120 words." },
+  { key:"contemporary", emoji:"💔", label:"Contemporary", name:"The Emotional Surgeon",
+    desc:"Dissects motivations with clinical precision. Deepens vulnerability until the reader aches.",
+    quote:"She wouldn't joke right now. She'd deflect.",
+    prompt:"You are StoryForge's Contemporary Romance co-writer — The Emotional Surgeon. Dissect motivations and deepen vulnerability.\n\nReply with exactly three labeled sections:\n\nCRITIQUE:\n2-3 sentences on where reactions feel false.\n\nREWRITE:\nRewrite to reveal what the character actually fears. 80-120 words.\n\nGO DARKER:\nAn alternative where neither can pretend anymore. 80-120 words." },
+  { key:"thriller", emoji:"🔪", label:"Thriller", name:"The Paranoid Architect",
+    desc:"Plants red herrings with surgical precision. Refuses any twist that's too clean.",
+    quote:"That clue is too clean. Hide it.",
+    prompt:"You are StoryForge's Thriller co-writer — The Paranoid Architect. Plant red herrings and guard timelines.\n\nReply with exactly three labeled sections:\n\nCRITIQUE:\n2-3 sentences on what is too obvious or convenient.\n\nREWRITE:\nRewrite to plant something subtle that will matter later. 80-120 words.\n\nGO DARKER:\nAn alternative implicating someone unexpected. 80-120 words." },
+  { key:"paranormal", emoji:"🧛", label:"Paranormal", name:"The Myth Whisperer",
+    desc:"Expands supernatural hierarchies. Knows what the mythology is hiding.",
+    quote:"If they're fated, who benefits from breaking them?",
+    prompt:"You are StoryForge's Paranormal co-writer — The Myth Whisperer. Expand supernatural lore and forbidden dynamics.\n\nReply with exactly three labeled sections:\n\nCRITIQUE:\n2-3 sentences on where the supernatural feels decorative.\n\nREWRITE:\nRewrite so the supernatural is dangerous and specific. 80-120 words.\n\nGO DARKER:\nAn alternative making the forbidden dimension explicit. 80-120 words." },
+  { key:"comedy", emoji:"😂", label:"Comedy", name:"The Timing Sniper",
+    desc:"Punches up dialogue until it bleeds wit. Eliminates every predictable punchline.",
+    quote:"The punchline's obvious. Flip it.",
+    prompt:"You are StoryForge's Comedy co-writer — The Timing Sniper. Sharpen jokes and subvert predictable punchlines.\n\nReply with exactly three labeled sections:\n\nCRITIQUE:\n2-3 sentences on where timing drags or jokes telegraph.\n\nREWRITE:\nRewrite with sharpened timing and a flipped punchline. 80-120 words.\n\nGO DARKER:\nAn alternative that finds comedy in discomfort. 80-120 words." },
+];
+
+const TABS = [
+  { key:"forge",     icon:"🔥", label:"The Forge" },
+  { key:"blueprint", icon:"📐", label:"Blueprint" },
+  { key:"rewrite",   icon:"✂️",  label:"Rewrite Lab" },
+  { key:"project",   icon:"🗂",  label:"Project" },
+];
+
+const TROPES = ["Enemies to Lovers","Forced Proximity","Second Chance","Forbidden Love","Slow Burn","Found Family","Chosen One","Dark Secret","Power Imbalance","Redemption Arc","Fake Dating","Hidden Identity"];
+const THEMES = ["Grief & Loss","Power & Corruption","Identity","Obsession","Betrayal","Sacrifice","Belonging","Revenge","Healing","Ambition"];
+const TONES  = ["Lyrical","Brutal","Atmospheric","Raw","Darkly Humorous","Melancholic","Tense","Dreamy"];
+
+// ─── API ──────────────────────────────────────────────────────────────────────
+async function callClaude(prompt, maxTokens=1200) {
+  const workerUrl = window.STORYFORGE_WORKER_URL;
+  if (!workerUrl) {
+    window.dispatchEvent(new CustomEvent('sf-needs-url'));
+    throw new Error("Please enter your Worker URL first.");
+  }
+  const res = await fetch(workerUrl, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:maxTokens,messages:[{role:"user",content:prompt}]})
+  });
+  const data = await res.json();
+  if(!res.ok) throw new Error((data.error&&data.error.message)||"HTTP "+res.status);
+  return (data.content||[]).map(b=>b.text||"").join("");
+}
+
+function parseSections(text) {
+  const out={};
+  const lines=text.split("\n");
+  let cur=null,buf=[];
+  const flush=()=>{if(cur)out[cur]=buf.join("\n").trim();};
+  for(const line of lines){
+    const u=line.trim().toUpperCase().replace(/[*:#]/g,"").trim();
+    if(u==="CRITIQUE"){flush();cur="critique";buf=[];}
+    else if(u==="REWRITE"){flush();cur="rewrite";buf=[];}
+    else if(u==="GO DARKER"||u==="DARKER"){flush();cur="darker";buf=[];}
+    else if(u==="RIVALRY"){flush();cur="rivalry";buf=[];}
+    else if(u.startsWith("PLOT SKELETON")||u.startsWith("SKELETON")){flush();cur="skeleton"+Object.keys(out).filter(k=>k.startsWith("skeleton")).length;buf=[];}
+    else if(u.startsWith("CHARACTER CONFLICT")||u.startsWith("CONFLICT WEB")){flush();cur="conflict"+Object.keys(out).filter(k=>k.startsWith("conflict")).length;buf=[];}
+    else if(u.startsWith("TWIST")){flush();cur="twist";buf=[];}
+    else if(u.startsWith("ARC")||u.startsWith("MULTI")){flush();cur="arc";buf=[];}
+    else if(u==="FLAGS"||u==="ISSUES"||u==="PROBLEMS"){flush();cur="flags";buf=[];}
+    else if(["LYRICAL","BRUTAL","MINIMALIST","ELEVATED"].includes(u)){flush();cur=u.toLowerCase();buf=[];}
+    else if(u==="SUBTEXT"){flush();cur="subtext";buf=[];}
+    else{buf.push(line);}
+  }
+  flush();
+  if(!Object.keys(out).length)out.critique=text.trim();
+  return out;
+}
+
+// ─── AUTH MODAL ───────────────────────────────────────────────────────────────
+function AuthModal({ initialMode="signin", onAuth, onClose }) {
+  const [mode, setMode]       = React.useState(initialMode);
+  const [email, setEmail]     = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [name, setName]       = React.useState("");
+  const [error, setError]     = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+
+  const submit = async () => {
+    setError("");
+    if (!email.trim()) { setError("Email is required."); return; }
+    if (!password.trim()) { setError("Password is required."); return; }
+    if (mode==="signup" && !name.trim()) { setError("Name is required."); return; }
+    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    setLoading(true);
+    await new Promise(r => setTimeout(r, 900));
+    setLoading(false);
+    onAuth({ name: mode==="signup" ? name : email.split("@")[0], email });
+  };
+
+  return (
+    <div className="modal-overlay" onClick={e=>{ if(e.target===e.currentTarget) onClose(); }}>
+      <div className="modal">
+        <div className="modal-head">
+          <h2 className="modal-title">
+            {mode==="signin" ? <>Welcome <em>back.</em></> : <>Join the <em>Forge.</em></>}
+          </h2>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          <div className="modal-tabs">
+            <button className={"modal-tab"+(mode==="signin"?" active":"")} onClick={()=>{setMode("signin");setError("");}}>Sign In</button>
+            <button className={"modal-tab"+(mode==="signup"?" active":"")} onClick={()=>{setMode("signup");setError("");}}>Create Account</button>
+          </div>
+
+          {error && <div className="auth-error">{error}</div>}
+
+          {mode==="signup" && (
+            <div className="auth-field">
+              <label className="auth-label">Your Name</label>
+              <input className="auth-input" type="text" placeholder="e.g. Alicia" value={name} onChange={e=>setName(e.target.value)}
+                onKeyDown={e=>{if(e.key==="Enter")submit();}}/>
+            </div>
+          )}
+          <div className="auth-field">
+            <label className="auth-label">Email</label>
+            <input className="auth-input" type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)}
+              onKeyDown={e=>{if(e.key==="Enter")submit();}}/>
+          </div>
+          <div className="auth-field" style={{marginBottom:"1.5rem"}}>
+            <label className="auth-label">Password</label>
+            <input className="auth-input" type="password" placeholder="••••••••" value={password} onChange={e=>setPassword(e.target.value)}
+              onKeyDown={e=>{if(e.key==="Enter")submit();}}/>
+          </div>
+
+          <button className="btn btn-fire btn-full" onClick={submit} disabled={loading}>
+            {loading ? <><div className="spin"/><span>{mode==="signin"?"Signing in…":"Creating account…"}</span></> : mode==="signin" ? "Sign In →" : "Create Account →"}
+          </button>
+
+          <div className="auth-divider"><span>or</span></div>
+
+          <button className="btn btn-ghost btn-full" onClick={()=>onAuth({name:"Guest Writer",email:"guest@storyforge.ai"})}>
+            Continue as Guest
+          </button>
+
+          <div className="auth-footer">
+            {mode==="signin"
+              ? <span>No account? <button onClick={()=>{setMode("signup");setError("");}}>Create one free</button></span>
+              : <span>Already have an account? <button onClick={()=>{setMode("signin");setError("");}}>Sign in</button></span>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── FORGE TAB ────────────────────────────────────────────────────────────────
+function ForgeTab() {
+  const [personality,setPersonality]=React.useState("dark-romance");
+  const [rivalry,setRivalry]=React.useState(false);
+  const [input,setInput]=React.useState("");
+  const [loading,setLoading]=React.useState(false);
+  const [outputs,setOutputs]=React.useState(null);
+  const [tab,setTab]=React.useState("critique");
+  const p=PERSONALITIES.find(x=>x.key===personality);
+
+  const forge=async()=>{
+    if(!input.trim()||loading)return;
+    setLoading(true);setOutputs(null);
+    try{
+      let prompt=p.prompt+"\n\nHere is the scene:\n\n"+input;
+      if(rivalry)prompt+="\n\nRIVALRY MODE: Also add a RIVALRY section arguing for the morally messier path the writer is avoiding.";
+      const raw=await callClaude(prompt);
+      const s=parseSections(raw);
+      if(!s.critique&&!s.rewrite&&!s.darker)s.critique=raw;
+      setOutputs(s);setTab("critique");
+    }catch(e){setOutputs({critique:"Error: "+e.message});}
+    setLoading(false);
+  };
+
+  const tabs=[
+    {key:"critique",label:"Critique",cls:"tag-c"},
+    {key:"rewrite",label:"Rewrite",cls:"tag-r"},
+    {key:"darker",label:"Go Darker",cls:"tag-d"},
+    ...(rivalry?[{key:"rivalry",label:"⚡ Rivalry",cls:"tag-v"}]:[]),
+  ];
+
+  return(
+    <div className="panel">
+      <div className="eyebrow">AI Co-Writer · Powered by Claude</div>
+      <h2 className="panel-title">The <em>Forge.</em></h2>
+      <p className="panel-sub">Write a scene. Pick your co-writer's personality. Get a critique, a rewrite, and a darker alternative — not flattery.</p>
+      <div className="p-chips">
+        {PERSONALITIES.map(px=>(
+          <button key={px.key} className={"p-chip"+(personality===px.key?" active":"")} onClick={()=>setPersonality(px.key)}>
+            {px.emoji} {px.label}
+          </button>
+        ))}
+      </div>
+      <div className="rivalry-row">
+        <span className="rlabel">Rivalry Mode</span>
+        <div className={"toggle"+(rivalry?" on":"")} onClick={()=>setRivalry(!rivalry)}><div className="toggle-k"/></div>
+        <span className={"rbadge"+(rivalry?" on":"")}>Chaos Enabled</span>
+      </div>
+      <div className="forge-grid">
+        <div className="forge-pane">
+          <div className="pane-head"><span className="pane-title">Your Scene</span><div className="pane-dot"/></div>
+          <textarea className="forge-ta" value={input} onChange={e=>setInput(e.target.value)}
+            onKeyDown={e=>{if((e.metaKey||e.ctrlKey)&&e.key==="Enter")forge();}}
+            placeholder={"Write a scene, a line of dialogue, a moment of conflict…\n\nPress ⌘↵ to forge."} maxLength={800}/>
+          <div className="pane-foot">
+            <span className="char-ct">{input.length} / 800</span>
+            <button className="btn btn-fire btn-sm" onClick={forge} disabled={loading||!input.trim()}>
+              {loading?<><div className="spin"/><span>Forging…</span></>:"Forge It →"}
+            </button>
+          </div>
+        </div>
+        <div className="forge-pane out-pane">
+          {outputs&&<div className="out-tabs">{tabs.map(t=>(
+            <button key={t.key} className={"out-tab"+(tab===t.key?" active":"")} onClick={()=>setTab(t.key)}>{t.label}</button>
+          ))}</div>}
+          <div style={{padding:"1.2rem",minHeight:"200px",overflowY:"auto",maxHeight:"420px"}}>
+            {loading?<div className="out-placeholder"><div className="spin"/><p style={{marginTop:"0.8rem",color:"var(--fog)"}}>The forge is thinking…</p></div>
+            :!outputs?<div className="out-placeholder"><div className="out-placeholder-icon">🖋</div><p>Awaiting your scene</p></div>
+            :<div><span className={"out-tag "+(tabs.find(t=>t.key===tab)?.cls||"tag-c")}>{tabs.find(t=>t.key===tab)?.label}</span>
+              <div className="out-body" style={{padding:0,marginTop:"0.6rem"}}>
+                {(outputs[tab]||"Not available.").split("\n\n").map((p,i)=><p key={i}>{p}</p>)}
+              </div>
+            </div>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── BLUEPRINT TAB ────────────────────────────────────────────────────────────
+function BlueprintTab(){
+  const [genre,setGenre]=React.useState("Dark Romance");
+  const [tropes,setTropes]=React.useState([]);
+  const [themes,setThemes]=React.useState([]);
+  const [tones,setTones]=React.useState([]);
+  const [spice,setSpice]=React.useState(3);
+  const [intensity,setIntensity]=React.useState(3);
+  const [loading,setLoading]=React.useState(false);
+  const [results,setResults]=React.useState(null);
+  const toggleArr=(arr,setArr,val)=>setArr(arr.includes(val)?arr.filter(x=>x!==val):[...arr,val]);
+
+  const generate=async()=>{
+    setLoading(true);setResults(null);
+    const prompt=`You are StoryForge's Story Blueprint engine. Generate a story blueprint for:\n\nGENRE: ${genre}\nTROPES: ${tropes.join(", ")||"Open"}\nTHEMES: ${themes.join(", ")||"Open"}\nTONE: ${tones.join(", ")||"Open"}\nSPICE LEVEL: ${spice}/5\nEMOTIONAL INTENSITY: ${intensity}/5\n\nReturn exactly these sections:\n\nPLOT SKELETON 1:\nA complete plot skeleton with setup, escalation, crisis, and resolution. 100-130 words.\n\nPLOT SKELETON 2:\nA second distinct plot skeleton with a different structural approach. 100-130 words.\n\nPLOT SKELETON 3:\nA third unexpected plot skeleton that subverts at least one expectation. 100-130 words.\n\nCHARACTER CONFLICT WEB 1:\nTwo characters, their core wound, their weapon, and what they want from each other. 80 words.\n\nCHARACTER CONFLICT WEB 2:\nA second character pairing with a different conflict dynamic. 80 words.\n\nTWIST:\nOne unexpected story twist that recontextualizes everything. 50 words.\n\nARC:\nA multi-book arc suggestion showing how this expands across 3 books. 70 words.`;
+    try{const raw=await callClaude(prompt,1800);setResults(parseSections(raw));}
+    catch(e){setResults({critique:"Error: "+e.message});}
+    setLoading(false);
+  };
+
+  const skeletons=results?[0,1,2].map(i=>results["skeleton"+i]).filter(Boolean):[];
+  const conflicts=results?[0,1].map(i=>results["conflict"+i]).filter(Boolean):[];
+
+  return(
+    <div className="panel">
+      <div className="eyebrow">Story Architecture</div>
+      <h2 className="panel-title">Story <em>Blueprint.</em></h2>
+      <p className="panel-sub">Set your parameters. StoryForge generates three plot skeletons, two character conflict webs, a twist, and a multi-book arc.</p>
+      <div className="bp-grid">
+        <div className="bp-form">
+          <div className="bp-form-title">Story Parameters</div>
+          <div className="field">
+            <label className="field-label">Genre</label>
+            <select className="field-select" value={genre} onChange={e=>setGenre(e.target.value)}>
+              {["Dark Romance","Fantasy","Contemporary Romance","Thriller","Paranormal","Dark Academia","Romantasy","Literary Fiction"].map(g=><option key={g}>{g}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label className="field-label">Tropes</label>
+            <div className="chip-group">{TROPES.map(t=><button key={t} className={"chip"+(tropes.includes(t)?" on":"")} onClick={()=>toggleArr(tropes,setTropes,t)}>{t}</button>)}</div>
+          </div>
+          <div className="field">
+            <label className="field-label">Themes</label>
+            <div className="chip-group">{THEMES.map(t=><button key={t} className={"chip"+(themes.includes(t)?" on":"")} onClick={()=>toggleArr(themes,setThemes,t)}>{t}</button>)}</div>
+          </div>
+          <div className="field">
+            <label className="field-label">Tone</label>
+            <div className="chip-group">{TONES.map(t=><button key={t} className={"chip"+(tones.includes(t)?" on":"")} onClick={()=>toggleArr(tones,setTones,t)}>{t}</button>)}</div>
+          </div>
+          <div className="slider-wrap">
+            <div className="slider-row"><span className="field-label" style={{margin:0}}>Spice Level</span><span className="slider-val">{spice}/5</span></div>
+            <input type="range" className="slider" min={1} max={5} value={spice} onChange={e=>setSpice(+e.target.value)}/>
+          </div>
+          <div className="slider-wrap" style={{marginBottom:"1.5rem"}}>
+            <div className="slider-row"><span className="field-label" style={{margin:0}}>Emotional Intensity</span><span className="slider-val">{intensity}/5</span></div>
+            <input type="range" className="slider" min={1} max={5} value={intensity} onChange={e=>setIntensity(+e.target.value)}/>
+          </div>
+          <button className="btn btn-fire" style={{width:"100%"}} onClick={generate} disabled={loading}>
+            {loading?<><div className="spin"/><span>Generating…</span></>:"Generate Blueprint →"}
+          </button>
+        </div>
+        <div className="bp-results">
+          {loading&&<div className="bp-empty"><div className="spin" style={{width:20,height:20}}/><p style={{marginTop:"1rem"}}>Building your story architecture…</p></div>}
+          {!loading&&!results&&<div className="bp-empty"><div className="bp-empty-icon">📐</div><p>Configure and generate</p></div>}
+          {results&&!loading&&<>
+            {skeletons.map((s,i)=>(
+              <div key={i} className="bp-card">
+                <div className="bp-card-head"><span className="out-tag tag-c">Plot Skeleton {i+1}</span><div className="bp-card-num">0{i+1}</div></div>
+                <div className="bp-card-body">{s.split("\n").map((l,j)=><p key={j}>{l}</p>)}</div>
+              </div>
+            ))}
+            {conflicts.map((c,i)=>(
+              <div key={i} className="bp-card">
+                <div className="bp-card-head"><span className="out-tag tag-r">Conflict Web {i+1}</span></div>
+                <div className="bp-card-body">{c.split("\n").map((l,j)=><p key={j}>{l}</p>)}</div>
+              </div>
+            ))}
+            {results.twist&&<div className="bp-card"><div className="bp-card-head"><span className="out-tag tag-d">Unexpected Twist</span></div><div className="bp-card-body">{results.twist}</div></div>}
+            {results.arc&&<div className="bp-card"><div className="bp-card-head"><span className="out-tag tag-b">Multi-Book Arc</span></div><div className="bp-card-body">{results.arc}</div></div>}
+          </>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── REWRITE LAB ─────────────────────────────────────────────────────────────
+function RewriteTab(){
+  const [input,setInput]=React.useState("");
+  const [tone,setTone]=React.useState("lyrical");
+  const [loading,setLoading]=React.useState(false);
+  const [outputs,setOutputs]=React.useState(null);
+  const [tab,setTab]=React.useState("flags");
+  const TONE_OPTIONS=[{key:"lyrical",label:"Lyrical"},{key:"brutal",label:"Brutal"},{key:"minimalist",label:"Minimalist"},{key:"elevated",label:"Elevated"}];
+
+  const elevate=async()=>{
+    if(!input.trim()||loading)return;
+    setLoading(true);setOutputs(null);
+    const prompt=`You are StoryForge's Rewrite Lab — an elite literary editor.\n\nReply with exactly these sections:\n\nFLAGS:\nList 3-5 specific issues as bullet points starting with a category like [CLICHÉ], [FLAT DIALOGUE], [PACING], [WEAK VERB], [TELLING NOT SHOWING].\n\n${tone.toUpperCase()}:\nA full rewrite of the scene in a ${tone} tone. 100-160 words.\n\nSUBTEXT:\n2-3 sentences on the subtext strategy used.\n\nHere is the scene:\n\n${input}`;
+    try{const raw=await callClaude(prompt,1400);const s=parseSections(raw);if(!s.flags&&!s[tone])s.flags=raw;setOutputs(s);setTab("flags");}
+    catch(e){setOutputs({flags:"Error: "+e.message});}
+    setLoading(false);
+  };
+
+  const parsedFlags=outputs?.flags?outputs.flags.split("\n").filter(l=>l.trim().startsWith("-")||l.trim().startsWith("•")||l.trim().match(/^\[/)):[];
+  const tabs=[{key:"flags",label:"Issues Found",cls:"tag-w"},{key:tone,label:tone.charAt(0).toUpperCase()+tone.slice(1)+" Rewrite",cls:"tag-r"},{key:"subtext",label:"Subtext Notes",cls:"tag-c"}];
+
+  return(
+    <div className="panel">
+      <div className="eyebrow">Elevate Your Prose</div>
+      <h2 className="panel-title">Rewrite <em>Lab.</em></h2>
+      <p className="panel-sub">Paste a scene. StoryForge flags flat dialogue, clichés, and weak verbs — then rewrites it in your chosen tone without erasing your voice.</p>
+      <div className="p-chips" style={{marginBottom:"1.5rem"}}>
+        {TONE_OPTIONS.map(t=><button key={t.key} className={"p-chip"+(tone===t.key?" active":"")} onClick={()=>setTone(t.key)}>{t.label}</button>)}
+      </div>
+      <div className="rw-grid">
+        <div className="forge-pane">
+          <div className="pane-head"><span className="pane-title">Original Scene</span><div className="pane-dot"/></div>
+          <textarea className="forge-ta" value={input} onChange={e=>setInput(e.target.value)}
+            onKeyDown={e=>{if((e.metaKey||e.ctrlKey)&&e.key==="Enter")elevate();}}
+            placeholder={"Paste or write your scene here…\n\nStoryForge will flag issues, then show you how to fix them."} maxLength={1200}/>
+          <div className="pane-foot">
+            <span className="char-ct">{input.length}/1200</span>
+            <button className="btn btn-fire btn-sm" onClick={elevate} disabled={loading||!input.trim()}>
+              {loading?<><div className="spin"/><span>Elevating…</span></>:"Elevate It →"}
+            </button>
+          </div>
+        </div>
+        <div className="forge-pane out-pane">
+          {outputs&&<div className="out-tabs">{tabs.map(t=><button key={t.key} className={"out-tab"+(tab===t.key?" active":"")} onClick={()=>setTab(t.key)}>{t.label}</button>)}</div>}
+          <div style={{padding:"1.2rem",minHeight:"200px",overflowY:"auto",maxHeight:"420px"}}>
+            {loading?<div className="out-placeholder"><div className="spin"/><p style={{marginTop:"0.8rem",color:"var(--fog)"}}>Analysing your prose…</p></div>
+            :!outputs?<div className="out-placeholder"><div className="out-placeholder-icon">✂️</div><p>Paste a scene to begin</p></div>
+            :tab==="flags"?(
+              <div><span className="out-tag tag-w">Issues Found</span>
+                {parsedFlags.length>0?(
+                  <div style={{marginTop:"0.8rem"}}>
+                    {parsedFlags.map((f,i)=>{
+                      const cat=f.match(/\[([^\]]+)\]/);const text=f.replace(/^[-•]\s*/,"").replace(/\[[^\]]+\]\s*/,"");
+                      const isWarn=f.includes("FLAT")||f.includes("WEAK")||f.includes("PACING");
+                      return(<div key={i} className="rw-flag"><span style={{fontSize:"0.85rem",flexShrink:0}}>{isWarn?"⚠️":"🔴"}</span><div>{cat&&<div className={"rw-flag-label "+(isWarn?"warn":"fix")}>{cat[1]}</div>}<div className="rw-flag-text">{text||f.replace(/^[-•]\s*/,"")}</div></div></div>);
+                    })}
+                  </div>
+                ):<div className="out-body" style={{padding:0,marginTop:"0.8rem"}}>{(outputs.flags||"").split("\n\n").map((p,i)=><p key={i}>{p}</p>)}</div>}
+              </div>
+            ):(
+              <div><span className={"out-tag "+(tabs.find(t2=>t2.key===tab)?.cls||"tag-r")}>{tabs.find(t2=>t2.key===tab)?.label}</span>
+                <div className="out-body" style={{padding:0,marginTop:"0.8rem"}}>{(outputs[tab]||"Not available.").split("\n\n").map((p,i)=><p key={i}>{p}</p>)}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── PROJECT TAB ─────────────────────────────────────────────────────────────
+const DEFAULT_THREADS=[
+  {id:1,text:"Marcus told Elena he was in London during the fire. Phone records suggest otherwise.",status:"alert"},
+  {id:2,text:"The silver ring in Elena's coat pocket. Planted Ch.7. Still unexplained.",status:"warn"},
+  {id:3,text:"The locked door at the east wing — mentioned twice, never opened.",status:"warn"},
+  {id:4,text:"Elena forgave Marcus in Ch.11 — 4 chapters earlier than her trust arc allows.",status:"alert"},
+  {id:5,text:"Power shift in Ch.10 is consistent with Marcus's established control patterns.",status:"ok"},
+];
+const DEFAULT_HM=[
+  {key:"emotional",label:"Emotional Tension",val:7.8,pct:78,cls:"hm-hi"},
+  {key:"physical",label:"Physical Tension",val:5.4,pct:54,cls:"hm-md"},
+  {key:"trust",label:"Trust Level",val:2.1,pct:21,cls:"hm-lo"},
+  {key:"power",label:"Power Imbalance",val:8.5,pct:85,cls:"hm-hi"},
+  {key:"redemption",label:"Redemption Arc",val:1.9,pct:19,cls:"hm-lo"},
+];
+
+function ProjectTab(){
+  const [threads,setThreads]=React.useState(DEFAULT_THREADS);
+  const [newThread,setNewThread]=React.useState("");
+  const [hmData,setHmData]=React.useState(DEFAULT_HM);
+  const [animated,setAnimated]=React.useState(false);
+  const hmRef=React.useRef();
+
+  React.useEffect(()=>{
+    const obs=new IntersectionObserver(([e])=>{if(e.isIntersecting)setAnimated(true);},{threshold:0.2});
+    if(hmRef.current)obs.observe(hmRef.current);
+    return()=>obs.disconnect();
+  },[]);
+
+  const addThread=()=>{if(!newThread.trim())return;setThreads(t=>[...t,{id:Date.now(),text:newThread,status:"warn"}]);setNewThread("");};
+  const removeThread=id=>setThreads(t=>t.filter(x=>x.id!==id));
+  const cycleStatus=id=>setThreads(t=>t.map(x=>x.id===id?{...x,status:x.status==="ok"?"warn":x.status==="warn"?"alert":"ok"}:x));
+  const updateHm=(key,val)=>setHmData(d=>d.map(r=>r.key===key?{...r,val:+val,pct:Math.round(+val*10)}:r));
+  const alerts=threads.filter(t=>t.status==="alert").length;
+  const warns=threads.filter(t=>t.status==="warn").length;
+
+  return(
+    <div className="panel">
+      <div className="eyebrow">Story Intelligence</div>
+      <h2 className="panel-title"><em>Project</em> Overview.</h2>
+      <p className="panel-sub">Track your story's secrets, planted clues, and Chekhov's guns — alongside the live emotional heat map of your central relationship.</p>
+      {alerts>0&&<div className="hm-alert" style={{margin:"0 0 1.5rem"}}><div className="hm-alert-dot"/>{alerts} continuity alert{alerts>1?"s":""} and {warns} unresolved thread{warns!==1?"s":""} need attention</div>}
+      <div className="project-grid">
+        <div className="project-panel">
+          <div className="project-panel-head">
+            <div className={"proj-dot "+(alerts>0?"dot-red":"dot-green")}/>
+            <span className="project-panel-title">Continuity Tracker</span>
+            <span style={{marginLeft:"auto",fontFamily:"'DM Mono',monospace",fontSize:"0.5rem",color:"var(--fog)"}}>{threads.length} threads</span>
+          </div>
+          <div className="tracker-list">
+            {threads.map(t=>(
+              <div key={t.id} className="tracker-item">
+                <span className="ti-icon" onClick={()=>cycleStatus(t.id)}>{t.status==="alert"?"🔴":t.status==="warn"?"🟡":"✅"}</span>
+                <div style={{flex:1}}>
+                  <div className={"ti-label "+t.status}>{t.status==="alert"?"Alert":t.status==="warn"?"Unresolved":"Resolved"}</div>
+                  <div className="ti-desc">{t.text}</div>
+                </div>
+                <button onClick={()=>removeThread(t.id)} style={{background:"none",border:"none",color:"var(--ash)",cursor:"pointer",fontSize:"0.75rem",padding:"0.2rem",flexShrink:0}}>✕</button>
+              </div>
+            ))}
+          </div>
+          <div className="add-thread-row">
+            <input className="add-thread-input" placeholder="Add a plot thread, clue, or secret…" value={newThread} onChange={e=>setNewThread(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")addThread();}}/>
+            <button className="btn btn-fire btn-sm" onClick={addThread}>Add</button>
+          </div>
+        </div>
+        <div className="project-panel" ref={hmRef}>
+          <div className="project-panel-head"><div className="proj-dot dot-red"/><span className="project-panel-title">Relationship Heat Map</span></div>
+          {hmData.filter(r=>r.val<3).length>0&&<div className="hm-alert"><div className="hm-alert-dot"/>{hmData.find(r=>r.val<3)?.label} critically low</div>}
+          <div className="hm-rows">
+            {hmData.map(row=>(
+              <div key={row.key}>
+                <div className="hm-top"><span className="hm-label">{row.label}</span><span className="hm-val">{row.val.toFixed(1)}</span></div>
+                <div className="hm-track"><div className={"hm-fill "+row.cls} style={{width:animated?row.pct+"%":"0%"}}/></div>
+              </div>
+            ))}
+          </div>
+          <div className="hm-edit-row">
+            {hmData.slice(0,4).map(row=>(
+              <div key={row.key}>
+                <div className="hm-slider-label">{row.label.split(" ")[0]}</div>
+                <input type="range" className="slider" min={0} max={10} step={0.1} value={row.val} onChange={e=>updateHm(row.key,e.target.value)}/>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── WORKER SETUP MODAL ───────────────────────────────────────────────────────
+function WorkerSetupModal({ onSave }) {
+  const [url, setUrl] = React.useState(localStorage.getItem('sf_worker_url') || '');
+  const [error, setError] = React.useState('');
+
+  const save = () => {
+    const trimmed = url.trim();
+    if (!trimmed) { setError('Please enter a URL.'); return; }
+    if (!trimmed.startsWith('http')) { setError('URL must start with https://'); return; }
+    localStorage.setItem('sf_worker_url', trimmed);
+    window.STORYFORGE_WORKER_URL = trimmed;
+    onSave();
+  };
+
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',animation:'fadeIn 0.2s ease',backdropFilter:'blur(4px)'}}>
+      <div style={{background:'var(--char)',border:'1px solid rgba(201,75,26,0.25)',width:'100%',maxWidth:480,margin:'1rem',animation:'slideDown 0.3s ease'}}>
+        <div style={{padding:'1.8rem 2rem 0',borderBottom:'1px solid rgba(201,75,26,0.1)',paddingBottom:'1.2rem'}}>
+          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'0.55rem',letterSpacing:'0.22em',textTransform:'uppercase',color:'var(--ember)',marginBottom:'0.5rem'}}>One-Time Setup</div>
+          <h2 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:'1.9rem',fontWeight:300,color:'var(--cream)',lineHeight:1.1}}>Connect your <em style={{fontStyle:'italic',color:'var(--sepia)'}}>Forge.</em></h2>
+        </div>
+        <div style={{padding:'1.5rem 2rem 2rem'}}>
+          <p style={{fontSize:'0.88rem',color:'var(--mist)',lineHeight:1.8,marginBottom:'1.5rem'}}>
+            StoryForge uses a Cloudflare Worker to call the AI securely. Paste your deployed worker URL below — it's saved locally and never shared.
+          </p>
+          <div style={{background:'var(--slate)',border:'1px solid rgba(201,75,26,0.1)',padding:'1rem 1.2rem',marginBottom:'1.5rem',fontSize:'0.82rem',color:'var(--fog)',lineHeight:1.8}}>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'0.52rem',letterSpacing:'0.14em',textTransform:'uppercase',color:'var(--sepia)',marginBottom:'0.6rem'}}>Don't have a worker yet?</div>
+            1. Go to <strong style={{color:'var(--parchment)'}}>workers.cloudflare.com</strong> (free)<br/>
+            2. Create a Worker → paste <strong style={{color:'var(--parchment)'}}>worker.js</strong><br/>
+            3. Settings → Variables → add secret <strong style={{color:'var(--parchment)'}}>ANTHROPIC_API_KEY</strong><br/>
+            4. Deploy → copy the URL → paste below
+          </div>
+          {error && <div style={{background:'rgba(201,75,26,0.12)',border:'1px solid rgba(201,75,26,0.3)',color:'var(--ember)',fontFamily:"'DM Mono',monospace",fontSize:'0.58rem',padding:'0.6rem 0.9rem',marginBottom:'1rem'}}>{error}</div>}
+          <div style={{marginBottom:'1.2rem'}}>
+            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'0.52rem',letterSpacing:'0.14em',textTransform:'uppercase',color:'var(--fog)',display:'block',marginBottom:'0.4rem'}}>Worker URL</label>
+            <input
+              value={url}
+              onChange={e => { setUrl(e.target.value); setError(''); }}
+              onKeyDown={e => { if(e.key==='Enter') save(); }}
+              placeholder="https://storyforge.your-name.workers.dev"
+              style={{width:'100%',background:'var(--slate)',border:'1px solid rgba(122,111,98,0.2)',color:'var(--parchment)',fontFamily:"'Libre Baskerville',serif",fontSize:'0.88rem',padding:'0.75rem 1rem',outline:'none',boxSizing:'border-box'}}
+              autoFocus
+            />
+          </div>
+          <button
+            onClick={save}
+            style={{width:'100%',padding:'0.85rem',background:'var(--ember)',color:'white',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'0.6rem',letterSpacing:'0.12em',textTransform:'uppercase',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem'}}
+          >
+            Save & Start Forging →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── LANDING PAGE ─────────────────────────────────────────────────────────────
+function Landing({ onSignIn, onSignUp }) {
+  const features = [
+    { num:"01", tag:"The Forge", name:"AI Scene Co-Writer", desc:"Write a scene, pick a personality archetype, get a critique, a rewrite, and a darker alternative — powered live by Claude.", detail:["6 AI personality archetypes","Rivalry Mode for chaos","Critique + Rewrite + Go Darker","⌘↵ to forge instantly"] },
+    { num:"02", tag:"Blueprint", name:"Story Architecture Generator", desc:"Set genre, tropes, themes, tone, spice level, and intensity. Get three plot skeletons, conflict webs, a twist, and a multi-book arc.", detail:["3 full plot skeletons","Character conflict webs","Unexpected twist option","Multi-book arc planning"] },
+    { num:"03", tag:"Rewrite Lab", name:"Elevate Any Scene", desc:"Paste a scene and StoryForge flags flat dialogue, clichés, and weak verbs — then rewrites in Lyrical, Brutal, Minimalist, or Elevated tone.", detail:["Issue detection by category","4 distinct tone rewrites","Subtext strategy notes","Voice-preserving elevation"] },
+    { num:"04", tag:"Project", name:"Continuity & Heat Map", desc:"Track lies, planted clues, and Chekhov's guns across your manuscript. Plus a live relationship heat map you can update scene by scene.", detail:["Live continuity alerts","Chekhov's gun tracking","Relationship heat map","Adjustable per-scene sliders"] },
+  ];
+
+  const pricingFree    = ["1 active project","3 personality archetypes","Scene crafting (5/month)","Basic continuity tracker"];
+  const pricingPremium = ["Unlimited projects","All 6 personalities + blending","Rivalry Mode","Heat Map dashboard","Multi-book arc planner","Blueprint Generator","Rewrite Lab all tones","Market readiness scoring"];
+
+  return (
+    <div className="landing">
+      {/* Nav */}
+      <nav className="lnav">
+        <div className="lnav-logo">Story<span>Forge</span></div>
+        <ul className="lnav-links">
+          <li><a onClick={()=>document.getElementById("features-section")?.scrollIntoView({behavior:"smooth"})}>Features</a></li>
+          <li><a onClick={()=>document.getElementById("personalities-section")?.scrollIntoView({behavior:"smooth"})}>Personalities</a></li>
+          <li><a onClick={()=>document.getElementById("pricing-section")?.scrollIntoView({behavior:"smooth"})}>Pricing</a></li>
+        </ul>
+        <div className="lnav-right">
+          <button className="lnav-signin" onClick={onSignIn}>Sign In</button>
+          <button className="lnav-cta" onClick={onSignUp}>Start Free</button>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <section className="hero">
+        <p className="hero-eyebrow">AI Co-Writer · Narrative Engine · Story Instigator</p>
+        <h1 className="hero-title">
+          Write with<br/>
+          <strong>consequence.</strong>
+          <em>Not just words.</em>
+        </h1>
+        <p className="hero-sub">StoryForge doesn't generate text. It challenges your choices, guards your continuity, and pushes your story toward its most dangerous, most honest version.</p>
+        <div className="hero-btns">
+          <button className="btn btn-fire" onClick={onSignUp}>Enter the Forge — Free</button>
+          <button className="btn btn-ghost" onClick={onSignIn}>Sign In</button>
+        </div>
+        <div className="hero-stats">
+          <div className="sf-stat"><div className="stat-num">6</div><div className="stat-lbl">AI Personalities</div></div>
+          <div className="stat-div"/>
+          <div className="sf-stat"><div className="stat-num">4</div><div className="stat-lbl">Writing Tools</div></div>
+          <div className="stat-div"/>
+          <div className="sf-stat"><div className="stat-num">∞</div><div className="stat-lbl">Story Threads</div></div>
+        </div>
+        <div className="scroll-cue"><div className="scroll-line"/><span>Scroll</span></div>
+      </section>
+
+      {/* Philosophy */}
+      <section className="philosophy">
+        <div className="philosophy-inner">
+          <div className="section-label">Core Philosophy</div>
+          <div>
+            <h2 className="phil-title">Part editor. Part co-writer.<br/><em>Part instigator.</em></h2>
+            <p className="phil-desc">Most writing AI generates text. StoryForge adapts its personality to your genre, tracks every planted threat, and pushes your narrative toward its most dangerous, most honest version. You bring the spark — it builds the fire.</p>
+            <div className="pillar-grid">
+              {[
+                {icon:"🖤",title:"Challenges Your Choices",desc:"Easy forgiveness is cheap. StoryForge asks what your story is actually costing your characters."},
+                {icon:"🧵",title:"Guards Continuity",desc:"Tracks lies, planted clues, and character arcs so you never contradict your own world."},
+                {icon:"🔥",title:"Pushes Stakes Higher",desc:"Suggests the morally messier path. Reminds you what your characters stand to lose."},
+              ].map(p=>(
+                <div key={p.title} className="pillar">
+                  <div className="pillar-icon">{p.icon}</div>
+                  <h3>{p.title}</h3>
+                  <p>{p.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Personalities */}
+      <section className="p-showcase" id="personalities-section">
+        <div className="p-showcase-inner">
+          <p className="section-eye">Adaptive Personality Matrix</p>
+          <h2 className="section-title">Your co-writer <em>evolves</em><br/>with your story.</h2>
+          <p className="section-sub">Six archetypes tuned to a genre's emotional logic. Auto-syncs to your setting, or blend them manually.</p>
+          <div className="p-grid">
+            {PERSONALITIES.map(p=>(
+              <div key={p.key} className="p-card">
+                <div className="p-card-genre">{p.emoji} {p.label}</div>
+                <div className="p-card-name">{p.name}</div>
+                <p className="p-card-desc">{p.desc}</p>
+                <div className="p-card-quote">"{p.quote}"</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="features" id="features-section">
+        <div className="features-inner">
+          <div className="features-head">
+            <div>
+              <p className="section-eye">The Toolset</p>
+              <h2 className="section-title">Tools that<br/><em>think</em> with you.</h2>
+            </div>
+            <p style={{color:"var(--mist)",fontSize:"0.92rem",lineHeight:1.85}}>Every feature is live — powered by Claude. Not static examples. Real responses to your real words.</p>
+          </div>
+          <div className="feature-rows">
+            {features.map(f=>(
+              <div key={f.num} className="feature-row">
+                <div className="feature-num">{f.num}</div>
+                <div>
+                  <div className="feature-tag">{f.tag}</div>
+                  <div className="feature-name">{f.name}</div>
+                  <p className="feature-desc">{f.desc}</p>
+                </div>
+                <ul className="feature-detail">{f.detail.map(d=><li key={d}>{d}</li>)}</ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section className="pricing" id="pricing-section">
+        <div className="pricing-inner">
+          <p className="section-eye" style={{textAlign:"center"}}>Pricing</p>
+          <h2 className="section-title" style={{textAlign:"center"}}>Choose your <em>forge.</em></h2>
+          <p style={{textAlign:"center",color:"var(--mist)",fontSize:"0.9rem",marginTop:"0.4rem"}}>Start free. Burn hotter when you're ready.</p>
+          <div className="pricing-cards">
+            <div className="price-card">
+              <div className="price-tier">Free</div>
+              <div className="price-amount">$0</div>
+              <div className="price-divider"/>
+              <ul className="price-features">{pricingFree.map(f=><li key={f}>{f}</li>)}</ul>
+              <button className="price-btn" onClick={onSignUp}>Start Free</button>
+            </div>
+            <div className="price-card featured">
+              <div className="featured-badge">Most Popular</div>
+              <div className="price-tier">Premium</div>
+              <div className="price-amount">$18 <small>/mo</small></div>
+              <div className="price-divider"/>
+              <ul className="price-features">{pricingPremium.map(f=><li key={f}>{f}</li>)}</ul>
+              <button className="price-btn" onClick={onSignUp}>Start Premium</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="cta-strip">
+        <h2>Write with<br/><em>consequence.</em></h2>
+        <p style={{color:"var(--mist)"}}>Your story deserves more than a text generator.</p>
+        <button className="btn btn-fire" style={{fontSize:"0.68rem",padding:"1rem 2.5rem"}} onClick={onSignUp}>
+          Enter the Forge — It's Free
+        </button>
+      </section>
+
+      {/* Footer */}
+      <footer className="footer">
+        <div className="footer-logo">Story<span>Forge</span></div>
+        <span className="footer-copy">© 2025 StoryForge AI · Built for writers who mean it · Powered by Claude</span>
+        <span className="footer-copy">Privacy · Terms</span>
+      </footer>
+    </div>
+  );
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function Dashboard({ user, onSignOut }) {
+  const [activeTab,setActiveTab]=React.useState("forge");
+  const [storyTitle,setStoryTitle]=React.useState("Untitled Story");
+  const [showUserMenu,setShowUserMenu]=React.useState(false);
+
+  return(
+    <>
+      <div className="app">
+        <div className="topbar">
+          <div className="topbar-logo">Story<span>Forge</span></div>
+          <input className="story-title-input" value={storyTitle} onChange={e=>setStoryTitle(e.target.value)} placeholder="Story title…"/>
+          <div className="topbar-right">
+            <div className="user-pill" onClick={()=>setShowUserMenu(!showUserMenu)} style={{position:"relative"}}>
+              <div className="user-avatar">{user.name.charAt(0).toUpperCase()}</div>
+              <span className="user-name">{user.name}</span>
+              {showUserMenu&&(
+                <div style={{position:"absolute",top:"calc(100% + 8px)",right:0,background:"var(--char)",border:"1px solid rgba(201,75,26,0.2)",minWidth:160,zIndex:300,animation:"slideDown 0.2s ease"}}>
+                  <div style={{padding:"0.8rem 1rem",borderBottom:"1px solid rgba(201,75,26,0.1)",fontFamily:"'DM Mono',monospace",fontSize:"0.55rem",letterSpacing:"0.1em",color:"var(--fog)"}}>{user.email}</div>
+                  <button onClick={onSignOut} style={{width:"100%",padding:"0.75rem 1rem",background:"none",border:"none",fontFamily:"'DM Mono',monospace",fontSize:"0.58rem",letterSpacing:"0.12em",textTransform:"uppercase",color:"var(--ember)",cursor:"pointer",textAlign:"left",transition:"background 0.2s"}}
+                    onMouseOver={e=>e.target.style.background="rgba(201,75,26,0.1)"}
+                    onMouseOut={e=>e.target.style.background="none"}>
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="tabbar">
+          {TABS.map(t=>(
+            <button key={t.key} className={"tab-btn"+(activeTab===t.key?" active":"")} onClick={()=>{setActiveTab(t.key);setShowUserMenu(false);}}>
+              <span className="tab-icon">{t.icon}</span>{t.label}
+            </button>
+          ))}
+        </div>
+        <div className="main" onClick={()=>setShowUserMenu(false)}>
+          {activeTab==="forge"     && <ForgeTab/>}
+          {activeTab==="blueprint" && <BlueprintTab/>}
+          {activeTab==="rewrite"   && <RewriteTab/>}
+          {activeTab==="project"   && <ProjectTab/>}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── ROOT ─────────────────────────────────────────────────────────────────────
+function App() {
+  const [user, setUser]           = React.useState(null);
+  const [modal, setModal]         = React.useState(null);
+  const [showWorker, setShowWorker] = React.useState(!window.STORYFORGE_WORKER_URL);
+
+  React.useEffect(() => {
+    const handler = () => setShowWorker(true);
+    window.addEventListener('sf-needs-url', handler);
+    return () => window.removeEventListener('sf-needs-url', handler);
+  }, []);
+
+  const handleAuth = (userData) => { setUser(userData); setModal(null); };
+  const handleSignOut = () => { setUser(null); setModal(null); };
+
+  return (
+    <>
+      {showWorker && <WorkerSetupModal onSave={() => setShowWorker(false)} />}
+      {!showWorker && !user && (
+        <>
+          <Landing
+            onSignIn={() => setModal("signin")}
+            onSignUp={() => setModal("signup")}
+          />
+          {modal && <AuthModal initialMode={modal} onAuth={handleAuth} onClose={() => setModal(null)} />}
+        </>
+      )}
+      {!showWorker && user && <Dashboard user={user} onSignOut={handleSignOut} />}
+    </>
+  );
+}
+
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(React.createElement(App));
+
+  </script>
+  <script>
+    window.addEventListener('load',function(){
+      setTimeout(function(){
+        var l=document.getElementById('loading');
+        if(l){l.classList.add('hidden');setTimeout(function(){l.remove();},600);}
+      },600);
+    });
+  </script>
+</body>
+</html>
